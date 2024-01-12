@@ -1,5 +1,12 @@
 [![Boost.Http.Proto](https://raw.githubusercontent.com/CPPAlliance/http_proto/master/doc/images/repo-logo.png)](http://master.http-proto.cpp.al/)
 
+|Branch |[`master`](https://github.com/cppalliance/http_proto/tree/master)|[`develop`](https://github.com/cppalliance/http_proto/tree/develop)
+|---|---|---|
+|[Docs](https://develop.http-proto.cpp.al/)|[![Documentation](https://img.shields.io/badge/docs-master-brightgreen.svg)](https://master.http-proto.cpp.al/)|[![Documentation](https://img.shields.io/badge/docs-develop-brightgreen.svg)](https://develop.http-proto.cpp.al/)
+|[GitHub Actions](https://github.com/)|[![CI](https://github.com/cppalliance/http_proto/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/cppalliance/http_proto/actions/workflows/ci.yml)|[![CI](https://github.com/cppalliance/http_proto/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/cppalliance/http_proto/actions/workflows/ci.yml)
+|[Drone](https://drone.io/)|[![Build Status](https://drone.cpp.al/api/badges/cppalliance/http_proto/status.svg?ref=refs/heads/master)](https://drone.cpp.al/cppalliance/http_proto)|[![Build Status](https://drone.cpp.al/api/badges/cppalliance/http_proto/status.svg?ref=refs/heads/develop)](https://drone.cpp.al/cppalliance/http_proto)
+|[Codecov](https://codecov.io)|[![codecov](https://codecov.io/gh/cppalliance/http_proto/branch/master/graph/badge.svg)](https://codecov.io/gh/cppalliance/http_proto/branch/master)|[![codecov](https://codecov.io/gh/cppalliance/http_proto/branch/develop/graph/badge.svg)](https://codecov.io/gh/cppalliance/http_proto/branch/develop)
+
 # Boost.Http.Proto
 
 ## This is currently **NOT** an official Boost library.
@@ -68,4 +75,3 @@ these per-commit analyses:
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file [LICENSE_1_0.txt](LICENSE_1_0.txt) or copy at
 https://www.boost.org/LICENSE_1_0.txt)
-
