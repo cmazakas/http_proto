@@ -232,7 +232,7 @@ jobs:
             build-type: "Debug"
             cxxflags: "--coverage"
             ccflags: "--coverage"
-            install: "lcov zlib1g-dev wget unzip"
+            install: "lcov zlib1g-dev wget unzip tree"
 
           # - compiler: "gcc"
           #   version: "13"
@@ -853,13 +853,19 @@ jobs:
           cmake-version: '>=3.15'
           extra-args: |
             -D Boost_VERBOSE=ON
-            -D BOOST_INCLUDE_LIBRARIES="${{ steps.patch.outputs.module }}"
+            -D BOOST_INCLUDE_LIBRARIES="http_proto"
             -D BOOST_HTTP_PROTO_BUILD_TESTS=ON
           export-compile-commands: ${{ matrix.time-trace }}
           package: false
           package-artifact: false
           ref-source-dir: boost-root/libs/http_proto
           toolchain: ${{ (startsWith(matrix.runs-on, 'windows') && !startsWith(matrix.compiler, 'mingw') && steps.patch-user-config.outputs.toolchain) || '' }}
+
+      - name: Debugging Step
+        run: |
+          ls boost-root
+          ls boost-root/__build_cmake_test__
+          tree boost-root/__build_cmake_test__
 
       - name: Set Path
         if: startsWith(matrix.runs-on, 'windows') && matrix.shared
