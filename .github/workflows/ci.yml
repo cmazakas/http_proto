@@ -842,6 +842,7 @@ jobs:
           build-type: ${{ matrix.build-type }}
           run-tests: ${{ matrix.coverage }}
           install-prefix: .local
+          install: ${{ !matrix.coverage }}
           cxxstd: ${{ matrix.latest-cxxstd }}
           cc: ${{ steps.setup-cpp.outputs.cc || matrix.cc }}
           ccflags: ${{ matrix.ccflags }}
