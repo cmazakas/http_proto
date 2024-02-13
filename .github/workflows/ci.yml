@@ -232,7 +232,7 @@ jobs:
             build-type: "Debug"
             cxxflags: "--coverage"
             ccflags: "--coverage"
-            install: "lcov zlib1g-dev wget unzip tree"
+            install: "lcov zlib1g-dev wget unzip tree cmake"
 
           # - compiler: "gcc"
           #   version: "13"
