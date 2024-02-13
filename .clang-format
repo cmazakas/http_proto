@@ -1,0 +1,7 @@
+AlignAfterOpenBracket: AlwaysBreak
+BinPackArguments: true
+BreakBeforeBraces: Allman
+IndentWidth: 4
+ReferenceAlignment: Left
+PenaltyBreakBeforeFirstCallParameter: 80
+PenaltyExcessCharacter: 80

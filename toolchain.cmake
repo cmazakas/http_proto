@@ -1,0 +1,4 @@
+# set(BUILD_SHARED_LIBS ON)
+# set(CMAKE_CXX_VISIBILITY_PRESET "hidden")
+set(CMAKE_CXX_FLAGS_INIT "--coverage")
+set(CMAKE_EXE_LINKER_FLAGS_CXX_INIT "--coverage")
