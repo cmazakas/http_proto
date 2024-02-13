@@ -865,8 +865,8 @@ jobs:
           ls boost-root
           echo "boost-root/__build_cmake_test__"
           ls boost-root/__build_cmake_test__
-          echo "ctest --test-dir=boost-root/__build_cmake_test"
-          ctest --test-dir=boost-root/__build_cmake_test__
+          echo "ctest --test-dir boost-root/__build_cmake_test__"
+          ctest --test-dir boost-root/__build_cmake_test__
 
       - name: Set Path
         if: startsWith(matrix.runs-on, 'windows') && matrix.shared
