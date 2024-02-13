@@ -552,6 +552,13 @@ on_insert_expect(
         return;
     // VFALCO Should we allow duplicate
     // Expect fields that have 100-continue?
+
+    // TODO: we need to add check content checks
+    // i.e. does the request have either `content-length`
+    // or a `transfer-encoding: chunked`.
+    // https://datatracker.ietf.org/doc/html/rfc9110#section-10.1.1-10
+
+
     if( md.expect.count > 1 ||
         ! grammar::ci_is_equal(v,
             "100-continue"))
