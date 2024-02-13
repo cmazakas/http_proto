@@ -845,8 +845,6 @@ jobs:
           install-prefix: .local
           install: ${{ !matrix.coverage }}
           cxxstd: ${{ matrix.latest-cxxstd }}
-          cc: ${{ steps.setup-cpp.outputs.cc || matrix.cc }}
-          ccflags: ${{ matrix.ccflags }}
           cxx: ${{ steps.setup-cpp.outputs.cxx || matrix.cxx }}
           cxxflags: ${{ matrix.cxxflags }}
           shared: ${{ matrix.shared }}
@@ -863,9 +861,12 @@ jobs:
 
       - name: Debugging Step
         run: |
+          echo "ls boost-root"
           ls boost-root
+          echo "boost-root/__build_cmake_test__"
           ls boost-root/__build_cmake_test__
-          tree boost-root/__build_cmake_test__
+          echo "ctest --test-dir=boost-root/__build_cmake_test"
+          ctest --test-dir=boost-root/__build_cmake_test
 
       - name: Set Path
         if: startsWith(matrix.runs-on, 'windows') && matrix.shared
