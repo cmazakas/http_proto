@@ -836,6 +836,7 @@ jobs:
         with:
           source-dir: boost-root
           build-dir: __build_cmake_test__
+          build-target: tests
           generator: ${{ matrix.generator }}
           generator-toolset: ${{ matrix.generator-toolset }}
           build-type: ${{ matrix.build-type }}
