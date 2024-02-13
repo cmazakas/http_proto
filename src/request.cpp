@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2021 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2024 Christian Mazakas
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -10,7 +11,6 @@
 #include <boost/http_proto/request.hpp>
 #include <boost/http_proto/request_view.hpp>
 #include "detail/copied_strings.hpp"
-#include "detail/number_string.hpp"
 #include <utility>
 
 namespace boost {
@@ -112,7 +112,7 @@ set_expect_100_continue(bool b)
                 ! h_.md.expect.is_100_continue);
             auto it = find(field::expect);
             BOOST_ASSERT(it != end());
-            erase(it);
+            set(it, "100-continue");
             return;
         }
 
@@ -122,17 +122,9 @@ set_expect_100_continue(bool b)
         return;
     }
 
+    BOOST_ASSERT(h_.md.expect.ec.failed());
     if(b)
     {
-        if(! h_.md.expect.ec.failed())
-        {
-            // remove all but one
-            raw_erase_n(
-                field::expect,
-                h_.md.expect.count - 1);
-            return;
-        }
-
         erase(field::expect);
         append(
             field::expect,
