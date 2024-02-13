@@ -836,14 +836,14 @@ jobs:
         with:
           source-dir: boost-root
           build-dir: __build_cmake_test__
-          build-target: tests
+          build-target: ${{ matrix.coverage && 'boost_http_proto_tests boost_http_proto_limits' || '' }}
           generator: ${{ matrix.generator }}
           generator-toolset: ${{ matrix.generator-toolset }}
           build-type: ${{ matrix.build-type }}
-          run-tests: true
+          run-tests: ${{ matrix.coverage }}
           install-prefix: .local
           cxxstd: ${{ matrix.latest-cxxstd }}
-          cc:  ${{ steps.setup-cpp.outputs.cc || matrix.cc }}
+          cc: ${{ steps.setup-cpp.outputs.cc || matrix.cc }}
           ccflags: ${{ matrix.ccflags }}
           cxx: ${{ steps.setup-cpp.outputs.cxx || matrix.cxx }}
           cxxflags: ${{ matrix.cxxflags }}
@@ -853,7 +853,6 @@ jobs:
             -D Boost_VERBOSE=ON
             -D BOOST_INCLUDE_LIBRARIES="${{ steps.patch.outputs.module }}"
             -D BOOST_HTTP_PROTO_BUILD_TESTS=ON
-            -D CMAKE_EXE_LINKER_FLAGS_CXX_INIT="--coverage"
           export-compile-commands: ${{ matrix.time-trace }}
           package: false
           package-artifact: false
