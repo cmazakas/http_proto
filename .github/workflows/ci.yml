@@ -832,7 +832,7 @@ jobs:
 
       - name: CMake Workflow
         uses: alandefreitas/cpp-actions/cmake-workflow@v1.8.2
-        if: ${{ matrix.time-trace || matrix.build-cmake || matrix.is-earliest }}
+        if: ${{ matrix.coverage || matrix.time-trace || matrix.build-cmake || matrix.is-earliest }}
         with:
           source-dir: boost-root
           build-dir: __build_cmake_test__
