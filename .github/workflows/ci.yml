@@ -814,7 +814,7 @@ jobs:
 
       - name: Boost B2 Workflow
         uses: alandefreitas/cpp-actions/b2-workflow@v1.8.2
-        if: ${{ !matrix.coverage && !matrix.time-trace }}
+        if: ${{ !matrix.coverage && !matrix.time-trace && !matrix.build-cmake }}
         with:
           source-dir: boost-root
           modules: http_proto
@@ -956,7 +956,18 @@ jobs:
           # Generate report
           gcov_tool="gcov-12"
 
-          lcov --capture --output-file "boost-root/libs/http_proto/__build_root_test__/coverage.info" --directory "boost-root/libs/http_proto/__build_root_test__" --base-directory boost-root/libs/http_proto --gcov-tool "$gcov_tool"
+          lcov \
+            --capture \
+            --output-file "boost-root/libs/http_proto/__build_root_test__/coverage.info" \
+            --directory "boost-root/libs/http_proto/__build_root_test__" \
+            --base-directory boost-root/libs/http_proto \
+            --gcov-tool "$gcov_tool"
+
+            lcov \
+              --output-file "boost-root/libs/http_proto/__build_root_test__/coverage.info" \
+              --base-directory boost-root/libs/http_proto \
+              --extract "boost-root/libs/http_proto/__build_root_test__/coverage.info" "boost-root/libs/http_proto/*" \
+              --gcov-tool "$gcov_tool"
 
           # Upload to codecov
           bash <(curl -s https://codecov.io/bash) -f "boost-root/libs/http_proto/__build_root_test__/coverage.info"
