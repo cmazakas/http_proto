@@ -811,6 +811,7 @@ jobs:
 
           python3 tools/boostdep/depinst/depinst.py buffers
           cd "$workspace_root"
+          cp http-proto-root/.codecov.yml .
 
       - name: Boost B2 Workflow
         uses: alandefreitas/cpp-actions/b2-workflow@v1.8.2
