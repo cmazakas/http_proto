@@ -26,4 +26,4 @@ ignore:
 
 # [/__w/http_proto/http_proto/boost-root/libs/http_proto/]
 fixes:
-  - "/__w/http_proto/http_proto/boost-root/libs/http_proto/::"
+  - "./boost-root/libs/http_proto/::"
