@@ -958,15 +958,10 @@ jobs:
             --capture \
             --output-file "boost-root/libs/http_proto/__build_root_test__/coverage.info" \
             --directory "boost-root/libs/http_proto/__build_root_test__" \
-            --base-directory boost-root/libs/http_proto \
+            --include "*/boost-root/libs/http_proto/*" \
             --gcov-tool "$gcov_tool"
 
-            lcov --list "boost-root/libs/http_proto/__build_root_test__/coverage.info"
-
-            lcov \
-              --output-file "boost-root/libs/http_proto/__build_root_test__/coverage.info" \
-              --extract "boost-root/libs/http_proto/__build_root_test__/coverage.info" "*/boost-root/libs/http_proto/*" \
-              --gcov-tool "$gcov_tool"
+          lcov --list "boost-root/libs/http_proto/__build_root_test__/coverage.info"
 
           # Upload to codecov
           bash <(curl -s https://codecov.io/bash) -f "boost-root/libs/http_proto/__build_root_test__/coverage.info"
