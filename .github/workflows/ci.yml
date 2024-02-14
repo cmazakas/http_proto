@@ -962,7 +962,7 @@ jobs:
           # Generate report
           gcov_tool="gcov-12"
 
-          lcov -c -q -o "boost-root/__build_cmake_test__/coverage.info" -d "boost-root/__build_cmake_test__" --include "boost-root/libs/http_proto/*" --gcov-tool "$gcov_tool"
+          lcov -c -o "boost-root/__build_cmake_test__/coverage.info" -d "boost-root/__build_cmake_test__" --gcov-tool "$gcov_tool"
 
           # Upload to codecov
           bash <(curl -s https://codecov.io/bash) -f "boost-root/__build_cmake_test__/coverage.info"
