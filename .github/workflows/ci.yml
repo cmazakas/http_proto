@@ -935,7 +935,7 @@ jobs:
           cmake-version: '>=3.20'
           package: false
           package-artifact: false
-          ref-source-dir: boost-root
+          ref-source-dir: boost-root/libs/http_proto
           toolchain: ${{ (startsWith(matrix.runs-on, 'windows') && !startsWith(matrix.compiler, 'mingw') && steps.patch-user-config.outputs.toolchain) || '' }}
 
       - name: FlameGraph
@@ -965,7 +965,7 @@ jobs:
 
             lcov \
               --output-file "boost-root/libs/http_proto/__build_root_test__/coverage.info" \
-              --extract "boost-root/libs/http_proto/__build_root_test__/coverage.info" "boost-root/libs/http_proto/*" \
+              --extract "boost-root/libs/http_proto/__build_root_test__/coverage.info" "*/boost-root/libs/http_proto/*" \
               --gcov-tool "$gcov_tool"
 
           # Upload to codecov
