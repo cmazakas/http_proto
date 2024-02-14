@@ -859,15 +859,6 @@ jobs:
           ref-source-dir: boost-root/libs/http_proto
           toolchain: ${{ (startsWith(matrix.runs-on, 'windows') && !startsWith(matrix.compiler, 'mingw') && steps.patch-user-config.outputs.toolchain) || '' }}
 
-      - name: Debugging Step
-        run: |
-          echo "ls boost-root"
-          ls boost-root
-          echo "boost-root/__build_cmake_test__"
-          ls boost-root/__build_cmake_test__
-          echo "ctest --test-dir boost-root/__build_cmake_test__"
-          ctest --test-dir boost-root/__build_cmake_test__
-
       - name: Set Path
         if: startsWith(matrix.runs-on, 'windows') && matrix.shared
         run: echo "$GITHUB_WORKSPACE/.local/bin" >> $GITHUB_PATH
