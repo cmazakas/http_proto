@@ -959,7 +959,7 @@ jobs:
           lcov --capture --output-file "boost-root/libs/http_proto/__build_root_test__/coverage.info" --directory "boost-root/libs/http_proto/__build_root_test__" --base-directory boost-root/libs/http_proto --gcov-tool "$gcov_tool"
 
           # Upload to codecov
-          bash <(curl -s https://codecov.io/bash) -f "boost-root/__build_root_test__/coverage.info"
+          bash <(curl -s https://codecov.io/bash) -f "boost-root/libs/http_proto/__build_root_test__/coverage.info"
 
           # Summary
           echo "# Coverage" >> $GITHUB_STEP_SUMMARY
