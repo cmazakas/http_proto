@@ -960,7 +960,6 @@ jobs:
             --output-file "boost-root/libs/http_proto/__build_root_test__/coverage.info" \
             --directory "boost-root/libs/http_proto/__build_root_test__" \
             --include "*/boost-root/libs/http_proto/*" \
-            --rc geninfo_adjust_src_path="*/boost-root/libs/http_proto/* => */http-proto-root/*" \
             --gcov-tool "$gcov_tool"
 
           lcov --list "boost-root/libs/http_proto/__build_root_test__/coverage.info"
