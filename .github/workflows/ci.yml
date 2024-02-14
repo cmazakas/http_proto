@@ -932,8 +932,8 @@ jobs:
           shared: ${{ matrix.shared }}
           extra-args: |
             -D Boost_VERBOSE=ON
-            -D BUILD_TESTING=ON
-            -D BOOST_SRC_DIR="boost-root"
+            -D BUILD_TESTING=OFF
+            -D BOOST_HTTP_PROTO_BUILD_TESTS=ON
           cmake-version: '>=3.20'
           package: false
           package-artifact: false
@@ -963,9 +963,10 @@ jobs:
             --base-directory boost-root/libs/http_proto \
             --gcov-tool "$gcov_tool"
 
+            lcov --list "boost-root/libs/http_proto/__build_root_test__/coverage.info"
+
             lcov \
               --output-file "boost-root/libs/http_proto/__build_root_test__/coverage.info" \
-              --base-directory boost-root/libs/http_proto \
               --extract "boost-root/libs/http_proto/__build_root_test__/coverage.info" "boost-root/libs/http_proto/*" \
               --gcov-tool "$gcov_tool"
 
