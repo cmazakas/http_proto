@@ -978,6 +978,14 @@ jobs:
           echo "Branch: [![codecov](https://codecov.io/github/$GITHUB_REPOSITORY/branch/$GITHUB_REF_NAME/graph/badge.svg)](https://codecov.io/github/$GITHUB_REPOSITORY/commit/$GITHUB_SHA)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        if: ${{ matrix.coverage }}
+        env:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          codecov_yml_path: http-proto-root/.codecov.yml
+          file: boost-root/libs/http_proto/__build_root_test/coverage.info
+
   # changelog:
   #   needs: [ runner-selection ]
   #   defaults:
