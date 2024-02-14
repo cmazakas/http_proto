@@ -959,6 +959,7 @@ jobs:
             --output-file "boost-root/libs/http_proto/__build_root_test__/coverage.info" \
             --directory "boost-root/libs/http_proto/__build_root_test__" \
             --include "*/boost-root/libs/http_proto/*" \
+            --rc geninfo_adjust_src_path="*/boost-root/libs/http_proto/* => */http-proto-root/*" \
             --gcov-tool "$gcov_tool"
 
           lcov --list "boost-root/libs/http_proto/__build_root_test__/coverage.info"
@@ -977,27 +978,27 @@ jobs:
           echo "Branch: [![codecov](https://codecov.io/github/$GITHUB_REPOSITORY/branch/$GITHUB_REF_NAME/graph/badge.svg)](https://codecov.io/github/$GITHUB_REPOSITORY/commit/$GITHUB_SHA)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-  changelog:
-    needs: [ runner-selection ]
-    defaults:
-      run:
-        shell: bash
+  # changelog:
+  #   needs: [ runner-selection ]
+  #   defaults:
+  #     run:
+  #       shell: bash
 
-    name: Changelog Summary
-    runs-on: ${{ fromJSON(needs.runner-selection.outputs.labelmatrix)['ubuntu-22.04'] }}
-    timeout-minutes: 120
+    # name: Changelog Summary
+    # runs-on: ${{ fromJSON(needs.runner-selection.outputs.labelmatrix)['ubuntu-22.04'] }}
+    # timeout-minutes: 120
 
-    steps:
-      - name: Clone Boost.HTTProto
-        uses: actions/checkout@v3
-        with:
-          # Avoid the common API rate limit exceeded error in boostorg by including 100 latest commits in any case
-          fetch-depth: 100
+    # steps:
+    #   - name: Clone Boost.HTTProto
+    #     uses: actions/checkout@v3
+    #     with:
+    #       # Avoid the common API rate limit exceeded error in boostorg by including 100 latest commits in any case
+    #       fetch-depth: 100
 
-      - name: Changelog
-        uses: alandefreitas/cpp-actions/create-changelog@v1.8.2
-        with:
-          thank-non-regular: ${{ startsWith(github.ref, 'refs/tags/') }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          limit: 200
-          tag-pattern: 'boost-.*\..*\..*'
+    #   - name: Changelog
+    #     uses: alandefreitas/cpp-actions/create-changelog@v1.8.2
+    #     with:
+    #       thank-non-regular: ${{ startsWith(github.ref, 'refs/tags/') }}
+    #       github-token: ${{ secrets.GITHUB_TOKEN }}
+    #       limit: 200
+    #       tag-pattern: 'boost-.*\..*\..*'
