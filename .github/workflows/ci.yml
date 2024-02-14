@@ -833,22 +833,22 @@ jobs:
 
       - name: CMake Workflow
         uses: alandefreitas/cpp-actions/cmake-workflow@v1.8.2
-        if: ${{ matrix.coverage || matrix.time-trace || matrix.build-cmake || matrix.is-earliest }}
+        if: ${{ matrix.time-trace || matrix.build-cmake || matrix.is-earliest }}
         with:
           source-dir: boost-root
           build-dir: __build_cmake_test__
-          build-target: ${{ matrix.coverage && 'boost_http_proto_tests boost_http_proto_limits' || '' }}
+          build-target: boost_http_proto_tests boost_http_proto_limits
           generator: ${{ matrix.generator }}
           generator-toolset: ${{ matrix.generator-toolset }}
           build-type: ${{ matrix.build-type }}
-          run-tests: ${{ matrix.coverage }}
+          run-tests: true
           install-prefix: .local
-          install: ${{ !matrix.coverage }}
+          install: true
           cxxstd: ${{ matrix.latest-cxxstd }}
           cxx: ${{ steps.setup-cpp.outputs.cxx || matrix.cxx }}
           cxxflags: ${{ matrix.cxxflags }}
           shared: ${{ matrix.shared }}
-          cmake-version: '>=3.15'
+          cmake-version: '>=3.20'
           extra-args: |
             -D Boost_VERBOSE=ON
             -D BOOST_INCLUDE_LIBRARIES="http_proto"
@@ -924,14 +924,14 @@ jobs:
 
       - name: CMake Root Workflow
         uses: alandefreitas/cpp-actions/cmake-workflow@v1.8.2
-        if: ${{ matrix.build-cmake || matrix.is-earliest }}
+        if: ${{ matrix.coverage || matrix.build-cmake || matrix.is-earliest }}
         with:
-          source-dir: boost-root/libs/${{ steps.patch.outputs.module }}
+          source-dir: boost-root/libs/http_proto
           build-dir: __build_root_test__
           generator: ${{ matrix.generator }}
           generator-toolset: ${{ matrix.generator-toolset }}
           build-type: ${{ matrix.build-type }}
-          run-tests: false
+          run-tests: true
           install: false
           cxxstd: ${{ matrix.latest-cxxstd }}
           cc: ${{ steps.setup-cpp.outputs.cc || matrix.cc }}
@@ -939,8 +939,11 @@ jobs:
           cxx: ${{ steps.setup-cpp.outputs.cxx || matrix.cxx }}
           cxxflags: ${{ matrix.cxxflags }}
           shared: ${{ matrix.shared }}
-          extra-args: -D Boost_VERBOSE=ON -D BUILD_TESTING=ON -D BOOST_SRC_DIR="../boost-root"
-          cmake-version: '>=3.15'
+          extra-args: |
+            -D Boost_VERBOSE=ON
+            -D BUILD_TESTING=ON
+            -D BOOST_SRC_DIR="boost-root"
+          cmake-version: '>=3.20'
           package: false
           package-artifact: false
           ref-source-dir: boost-root
@@ -962,10 +965,10 @@ jobs:
           # Generate report
           gcov_tool="gcov-12"
 
-          lcov -c -o "boost-root/__build_cmake_test__/coverage.info" -d "boost-root/__build_cmake_test__" --gcov-tool "$gcov_tool"
+          lcov --capture --output-file "boost-root/__build_root_test__/coverage.info" --directory "boost-root/__build_root_test__" --base-directory boost-root/libs/http_proto --gcov-tool "$gcov_tool"
 
           # Upload to codecov
-          bash <(curl -s https://codecov.io/bash) -f "boost-root/__build_cmake_test__/coverage.info"
+          bash <(curl -s https://codecov.io/bash) -f "boost-root/__build_root_test__/coverage.info"
 
           # Summary
           echo "# Coverage" >> $GITHUB_STEP_SUMMARY
