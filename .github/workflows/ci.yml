@@ -925,19 +925,12 @@ jobs:
           run-tests: true
           install: false
           cxxstd: ${{ matrix.latest-cxxstd }}
-          cc: ${{ steps.setup-cpp.outputs.cc || matrix.cc }}
-          ccflags: ${{ matrix.ccflags }}
           cxx: ${{ steps.setup-cpp.outputs.cxx || matrix.cxx }}
           cxxflags: ${{ matrix.cxxflags }}
           shared: ${{ matrix.shared }}
-          extra-args: |
-            -D Boost_VERBOSE=ON
-            -D BUILD_TESTING=OFF
-            -D BOOST_HTTP_PROTO_BUILD_TESTS=ON
           cmake-version: '>=3.20'
           package: false
           package-artifact: false
-          ref-source-dir: boost-root
           toolchain: ${{ (startsWith(matrix.runs-on, 'windows') && !startsWith(matrix.compiler, 'mingw') && steps.patch-user-config.outputs.toolchain) || '' }}
 
       - name: FlameGraph
