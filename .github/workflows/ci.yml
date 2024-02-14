@@ -956,7 +956,7 @@ jobs:
           # Generate report
           gcov_tool="gcov-12"
 
-          lcov --capture --output-file "boost-root/__build_root_test__/coverage.info" --directory "boost-root/__build_root_test__" --base-directory boost-root/libs/http_proto --gcov-tool "$gcov_tool"
+          lcov --capture --output-file "boost-root/libs/http_proto/__build_root_test__/coverage.info" --directory "boost-root/libs/http_proto/__build_root_test__" --base-directory boost-root/libs/http_proto --gcov-tool "$gcov_tool"
 
           # Upload to codecov
           bash <(curl -s https://codecov.io/bash) -f "boost-root/__build_root_test__/coverage.info"
