@@ -757,7 +757,7 @@ jobs:
         with:
           vcpkg: zlib
           vcpkg-dir: vcpkg-root
-          vcpkg-triplet: ${{ matrix.x86 && 'x86-windows' || 'x64-mingw-dynamic' }}
+          vcpkg-triplet: ${{ matrix.x86 && 'x86-windows' || 'x64-windows' }}
 
       - name: Patch user-config.jam (Windows)
         id: patch-user-config
@@ -767,7 +767,7 @@ jobs:
           set -xe
           home=$(pwd)
 
-          triplet=${{ matrix.x86 && 'x86-windows' || 'x64-mingw-dynamic' }}
+          triplet=${{ matrix.x86 && 'x86-windows' || 'x64-windows' }}
           addrmdl=${{ matrix.x86 && '32' || '64' }}
 
           echo "using zlib : : <include>\"${home}/vcpkg-root/installed/${triplet}/include\" <search>\"${home}/vcpkg-root/installed/${triplet}/lib\" : <address-model>${addrmdl} ;" | sed 's/\/d\//D:\//g' > user-config.jam
