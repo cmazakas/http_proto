@@ -7,9 +7,12 @@
 // Official repository: https://github.com/cppalliance/http_proto
 //
 
+#pragma once
+
 #ifndef BOOST_HTTP_PROTO_IMPL_SERIALIZER_HPP
 #define BOOST_HTTP_PROTO_IMPL_SERIALIZER_HPP
 
+#include <boost/http_proto/serializer.hpp>
 #include <boost/http_proto/detail/except.hpp>
 #include <boost/buffers/range.hpp>
 #include <utility>
@@ -70,7 +73,7 @@ void
 serializer::
 start(
     message_view_base const& m,
-    ConstBufferSequence&& body)   
+    ConstBufferSequence&& body)
 {
     start_init(m);
     auto const& bs =
@@ -115,7 +118,7 @@ inline
 auto
 serializer::
 make_array(std::size_t n) ->
-    detail::array_of_const_buffers 
+    detail::array_of_const_buffers
 {
     return {
         ws_.push_array(n,

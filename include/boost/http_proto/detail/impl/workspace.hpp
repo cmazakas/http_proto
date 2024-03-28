@@ -7,9 +7,12 @@
 // Official repository: https://github.com/cppalliance/http_proto
 //
 
+#pragma once
+
 #ifndef BOOST_HTTP_PROTO_DETAIL_IMPL_WORKSPACE_HPP
 #define BOOST_HTTP_PROTO_DETAIL_IMPL_WORKSPACE_HPP
 
+#include <boost/http_proto/detail/workspace.hpp>
 #include <boost/config.hpp>
 
 namespace boost {
