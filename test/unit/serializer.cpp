@@ -279,12 +279,7 @@ struct serializer_test
             {
                 auto mbs = stream.prepare(n);
                 auto bs = buffers::buffer_size(mbs);
-                if( res.chunked() ) {
-                    BOOST_TEST_GT(bs, 0);
-                    BOOST_TEST_LT(bs, n);
-                } else {
-                    BOOST_TEST_EQ(bs, n);
-                }
+                BOOST_TEST_EQ(bs, n);
 
                 if( bs > body.size() )
                     bs = body.size();
@@ -592,12 +587,98 @@ struct serializer_test
     }
 
     void
+    testStreamErrors()
+    {
+        {
+            core::string_view sv =
+                "HTTP/1.1 200 OK\r\n"
+                "Transfer-Encoding: chunked\r\n"
+                "\r\n";
+
+            core::string_view serialized =
+                "HTTP/1.1 200 OK\r\n"
+                "Transfer-Encoding: chunked\r\n"
+                "\r\n"
+                "0\r\n\r\n";
+
+            response res(sv);
+
+            serializer sr;
+            auto stream = sr.start_stream(res);
+            auto mbs = stream.prepare(0);
+            BOOST_TEST_EQ(
+                buffers::buffer_size(mbs), 0);
+            BOOST_TEST_THROWS(
+                stream.commit(0), std::logic_error);
+
+            auto mcbs = sr.prepare();
+            BOOST_TEST(mcbs.has_error());
+            BOOST_TEST(mcbs.error() == error::need_data);
+
+            stream.close();
+
+            mcbs = sr.prepare();
+            auto cbs = mcbs.value();
+            BOOST_TEST_EQ(
+                buffers::buffer_size(cbs),
+                serialized.size());
+
+            std::vector<char> s(
+                buffers::buffer_size(cbs), 'a');
+            buffers::buffer_copy(
+                buffers::make_buffer(
+                    s.data(), s.size()),
+                cbs);
+
+            core::string_view octets(s.data(),s.size());
+            BOOST_TEST_EQ(
+                octets, serialized);
+        }
+
+        {
+            core::string_view sv =
+                "HTTP/1.1 200 OK\r\n"
+                "Transfer-Encoding: chunked\r\n"
+                "\r\n";
+
+            response res(sv);
+            serializer sr(1024);
+
+            auto stream = sr.start_stream(res);
+
+            auto push =
+                [&]
+                {
+                    std::size_t num_written = 0;
+                    std::size_t const chunk_size = 256;
+                    std::string chunk(chunk_size, 'a');
+                    while( num_written < 2048 )
+                    {
+                        auto mbs =
+                            stream.prepare(chunk_size);
+
+                        auto n = buffers::buffer_copy(
+                            mbs,
+                            buffers::const_buffer(
+                                chunk.data(), chunk.size()));
+
+                        stream.commit(n);
+                        num_written += n;
+                    }
+                };
+
+            BOOST_TEST_THROWS(push(), std::length_error);
+        }
+    }
+
+    void
     run()
     {
         testSyntax();
         testEmptyBody();
         testOutput();
         testExpect100Continue();
+        testStreamErrors();
     }
 };
 

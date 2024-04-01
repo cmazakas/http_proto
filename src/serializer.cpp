@@ -545,7 +545,10 @@ prepare(
 {
     if( sr_->is_chunked_ )
     {
-        n -= (2 + 5); // CRLF + final chunk
+        if( sr_->tmp0_.capacity() < (n + 18 + 2 + 5) )
+            detail::throw_length_error();
+
+        n += 18;
         auto dest = sr_->tmp0_.prepare(n);
         return buffers::sans_prefix(
             dest, 18);
@@ -558,12 +561,15 @@ serializer::
 stream::
 commit(std::size_t n) const
 {
-    if( sr_->is_chunked_ &&
-        sr_->tmp0_.capacity() < (n + 5 + 2) )
-        detail::throw_length_error();
-
     if( sr_->is_chunked_ )
     {
+        // user should be be calling close() instead
+        if( n == 0 )
+            detail::throw_logic_error();
+
+        if( sr_->tmp0_.capacity() < (n + 18 + 2 + 5) )
+            detail::throw_length_error();
+
         auto dest = sr_->tmp0_.prepare(n + 18);
         write_chunk_header(buffers::prefix(dest, 18), n);
         sr_->tmp0_.commit(n + 18);
