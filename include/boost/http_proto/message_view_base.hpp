@@ -91,6 +91,15 @@ public:
     {
         return ph_->md;
     }
+
+    /** Return true if the message is using a chunked
+        transfer encoding.
+    */
+    bool
+    chunked() const noexcept
+    {
+        return ph_->md.transfer_encoding.is_chunked;
+    }
 };
 
 } // http_proto

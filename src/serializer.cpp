@@ -15,7 +15,7 @@
 #include <boost/buffers/buffer_size.hpp>
 #include <boost/core/ignore_unused.hpp>
 #include <stddef.h>
-
+#include <iostream>
 namespace boost {
 namespace http_proto {
 
@@ -521,7 +521,7 @@ serializer::
 stream::
 capacity() const
 {
-    auto const n = 
+    auto const n =
         chunked_overhead_ +
             2 + // CRLF
             5;  // final chunk
@@ -543,6 +543,13 @@ prepare(
     std::size_t n) const ->
         buffers_type
 {
+    if( sr_->is_chunked_ )
+    {
+        n -= (2 + 5); // CRLF + final chunk
+        auto dest = sr_->tmp0_.prepare(n);
+        return buffers::sans_prefix(
+            dest, 18);
+    }
     return sr_->tmp0_.prepare(n);
 }
 
@@ -551,7 +558,23 @@ serializer::
 stream::
 commit(std::size_t n) const
 {
-    sr_->tmp0_.commit(n);
+    if( sr_->is_chunked_ &&
+        sr_->tmp0_.capacity() < (n + 5 + 2) )
+        detail::throw_length_error();
+
+    if( sr_->is_chunked_ )
+    {
+        auto dest = sr_->tmp0_.prepare(n + 18);
+        write_chunk_header(buffers::prefix(dest, 18), n);
+        sr_->tmp0_.commit(n + 18);
+        sr_->tmp0_.commit(
+            buffers::buffer_copy(
+                sr_->tmp0_.prepare(2),
+                buffers::const_buffer(
+                    "\r\n", 2)));
+    } else {
+        sr_->tmp0_.commit(n);
+    }
 }
 
 void
@@ -562,6 +585,15 @@ close() const
     // Precondition violation
     if(! sr_->more_)
         detail::throw_logic_error();
+
+    if (sr_->is_chunked_)
+        sr_->tmp0_.commit(
+            buffers::buffer_copy(
+                sr_->tmp0_.prepare(5),
+                buffers::const_buffer(
+                    "0\r\n\r\n", 5)));
+
+
     sr_->more_ = false;
 }
 

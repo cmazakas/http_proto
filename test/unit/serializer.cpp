@@ -24,6 +24,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #ifdef BOOST_HTTP_PROTO_HAS_ZLIB
 #include <zlib.h>
@@ -169,6 +170,7 @@ struct serializer_test
         sr.start(res, make_const(buffers::const_buffer{}));
         sr.start(res, make_const(buffers::mutable_buffer{}));
         sr.start<test_source>(res, make_const("12345"));
+        sr.start_stream(res);
 
         serializer(65536);
 #ifdef BOOST_HTTP_PROTO_HAS_ZLIB
@@ -276,14 +278,24 @@ struct serializer_test
             if(! body.empty() )
             {
                 auto mbs = stream.prepare(n);
-                BOOST_TEST_EQ(buffers::buffer_size(mbs), n);
+                auto bs = buffers::buffer_size(mbs);
+                if( res.chunked() ) {
+                    BOOST_TEST_GT(bs, 0);
+                    BOOST_TEST_LT(bs, n);
+                } else {
+                    BOOST_TEST_EQ(bs, n);
+                }
+
+                if( bs > body.size() )
+                    bs = body.size();
 
                 buffers::buffer_copy(
                     mbs,
-                    buffers::const_buffer(body.data(), n));
+                    buffers::const_buffer(
+                        body.data(), bs));
 
-                stream.commit(n);
-                body.remove_prefix(n);
+                stream.commit(bs);
+                body.remove_prefix(bs);
             }
 
             if( body.empty() )
@@ -427,6 +439,38 @@ struct serializer_test
         check_stream(
             "HTTP/1.1 200 OK\r\n"
             "Server: test\r\n"
+            "\r\n",
+            std::string(0, '*'),
+            [](core::string_view s){
+                core::string_view expected_header =
+                    "HTTP/1.1 200 OK\r\n"
+                    "Server: test\r\n"
+                    "\r\n";
+                BOOST_TEST(s.starts_with(expected_header));
+                s.remove_prefix(expected_header.size());
+                BOOST_TEST_EQ(s, std::string(0, '*'));
+            });
+
+        check_stream(
+            "HTTP/1.1 200 OK\r\n"
+            "Server: test\r\n"
+            "Content-Length: 2048\r\n"
+            "\r\n",
+            std::string(2048, '*'),
+            [](core::string_view s){
+                core::string_view expected_header =
+                    "HTTP/1.1 200 OK\r\n"
+                    "Server: test\r\n"
+                    "Content-Length: 2048\r\n"
+                    "\r\n";
+                BOOST_TEST(s.starts_with(expected_header));
+                s.remove_prefix(expected_header.size());
+                BOOST_TEST_EQ(s, std::string(2048, '*'));
+            });
+
+        check_stream(
+            "HTTP/1.1 200 OK\r\n"
+            "Server: test\r\n"
             "Transfer-Encoding: chunked\r\n"
             "\r\n",
             std::string(2048, '*'),
@@ -438,7 +482,8 @@ struct serializer_test
                     "\r\n";
                 BOOST_TEST(s.starts_with(expected_header));
                 s.remove_prefix(expected_header.size());
-                BOOST_TEST_EQ(s, std::string(2048, '*'));
+                check_chunked_body(
+                    s, std::string(2048, '*'));
             });
     }
 
