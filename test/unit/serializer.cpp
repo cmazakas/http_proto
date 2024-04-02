@@ -322,13 +322,15 @@ struct serializer_test
                         buffers::mutable_buffer(
                             out_buf.data(), out_buf.size());
 
-                    auto n = buffers::buffer_copy(dst, buf);
-                    buf += n;
-                    out_buf_end = out_buf.begin() + n;
+                    auto num_copied =
+                        buffers::buffer_copy(dst, buf);
+                    buf += num_copied;
+                    out_buf_end =
+                        out_buf.begin() + num_copied;
                     s.insert(
                         s.end(),
                         out_buf.begin(), out_buf_end);
-                    sr.consume(n);
+                    sr.consume(num_copied);
                 }
             }
         }
