@@ -21,6 +21,7 @@
 #include <boost/core/ignore_unused.hpp>
 #include "test_helpers.hpp"
 
+#include <array>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -271,8 +272,6 @@ struct serializer_test
         BOOST_TEST(body.size() % n == 0);
 
         std::vector<char> s;
-        std::size_t len = 0;
-
         while(! sr.is_done() )
         {
             if(! body.empty() )
@@ -294,23 +293,44 @@ struct serializer_test
             }
 
             if( body.empty() )
+            {
                 stream.close();
+                BOOST_TEST_THROWS(
+                    stream.close(), std::logic_error);
+            }
 
             auto mcbs = sr.prepare();
             BOOST_TEST(!mcbs.has_error());
 
             auto cbs = mcbs.value();
-            auto const size = buffers::buffer_size(cbs);
+            auto size = buffers::buffer_size(cbs);
             BOOST_TEST_GT(size, 0);
 
-            s.resize(s.size() + size, 'a');
-            auto dst = buffers::mutable_buffer(
-                s.data() + len, size);
+            // we have the prepared buffer sequence
+            // representing the serializer's output but we
+            // wish to emulate a user consuming it using a
+            // smaller, fixed-size buffer
+            std::array<char, 16> out_buf{};
+            auto out_buf_end = out_buf.end();
+            auto end = cbs.end();
+            for(auto pos = cbs.begin(); pos != end; ++pos)
+            {
+                auto buf = *pos;
+                while( buf.size() > 0 )
+                {
+                    auto dst =
+                        buffers::mutable_buffer(
+                            out_buf.data(), out_buf.size());
 
-            buffers::buffer_copy(dst, cbs);
-
-            sr.consume(size);
-            len += size;
+                    auto n = buffers::buffer_copy(dst, buf);
+                    buf += n;
+                    out_buf_end = out_buf.begin() + n;
+                    s.insert(
+                        s.end(),
+                        out_buf.begin(), out_buf_end);
+                    sr.consume(n);
+                }
+            }
         }
 
         f(core::string_view(s.data(), s.size()));
@@ -497,6 +517,9 @@ struct serializer_test
             std::string s;
             system::result<
                 serializer::const_buffers_type> rv;
+            BOOST_TEST_THROWS(
+                sr.consume(req.buffer().size() + 1),
+                std::invalid_argument);
             for(;;)
             {
                 rv = sr.prepare();
@@ -633,6 +656,12 @@ struct serializer_test
             core::string_view octets(s.data(),s.size());
             BOOST_TEST_EQ(
                 octets, serialized);
+
+            sr.consume(s.size());
+            BOOST_TEST(sr.is_done());
+            BOOST_TEST_THROWS(
+                sr.consume(s.size()),
+                std::logic_error);
         }
 
         {

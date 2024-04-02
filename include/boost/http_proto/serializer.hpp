@@ -120,7 +120,7 @@ public:
     void
     start(
         message_view_base const& m,
-        ConstBufferSequence&& body);    
+        ConstBufferSequence&& body);
 
     /** Prepare the serializer for a new message
 

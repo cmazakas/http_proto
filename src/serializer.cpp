@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2019 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2024 Christian Mazakas
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -545,7 +546,7 @@ prepare(
 {
     if( sr_->is_chunked_ )
     {
-        if( sr_->tmp0_.capacity() < (n + 18 + 2 + 5) )
+        if( sr_->tmp0_.capacity() < (n + 18 + 2) )
             detail::throw_length_error();
 
         n += 18;
