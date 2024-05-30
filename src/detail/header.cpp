@@ -597,11 +597,30 @@ on_insert_transfer_encoding()
         md.transfer_encoding.codings += rv->size();
         for(auto t : *rv)
         {
-            if(! md.transfer_encoding.is_chunked)
+            auto& mte = md.transfer_encoding;
+
+            if(! mte.is_chunked )
             {
-                if(t.id == transfer_coding::chunked)
-                    md.transfer_encoding.is_chunked = true;
-                continue;
+                if( t.id == transfer_coding::chunked )
+                {
+                    mte.is_chunked = true;
+                    continue;
+                }
+
+                auto not_compressed =
+                    mte.compression_coding ==
+                    http_proto::compression_coding::none;
+
+                if( t.id == transfer_coding::deflate )
+                    mte.compression_coding =
+                        http_proto::compression_coding::deflate;
+
+                if( t.id == transfer_coding::gzip )
+                    mte.compression_coding =
+                        http_proto::compression_coding::gzip;
+
+                if( not_compressed )
+                    continue;
             }
             if(t.id == transfer_coding::chunked)
             {
@@ -611,6 +630,8 @@ on_insert_transfer_encoding()
                         error::bad_transfer_encoding);
                 md.transfer_encoding.codings = 0;
                 md.transfer_encoding.is_chunked = false;
+                md.transfer_encoding.compression_coding =
+                    http_proto::compression_coding::none;
                 update_payload();
                 return;
             }
@@ -620,6 +641,8 @@ on_insert_transfer_encoding()
                     error::bad_transfer_encoding);
             md.transfer_encoding.codings = 0;
             md.transfer_encoding.is_chunked = false;
+            md.transfer_encoding.compression_coding =
+                http_proto::compression_coding::none;
             update_payload();
             return;
         }
