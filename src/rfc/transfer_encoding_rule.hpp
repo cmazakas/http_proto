@@ -18,6 +18,7 @@
 
 namespace boost {
 namespace http_proto {
+namespace detail {
 
 //------------------------------------------------
 
@@ -116,6 +117,7 @@ constexpr transfer_coding_rule_t transfer_coding_rule{};
 constexpr auto transfer_encoding_rule =
     list_rule( transfer_coding_rule, 1 );
 
+} // detail
 } // http_proto
 } // boost
 

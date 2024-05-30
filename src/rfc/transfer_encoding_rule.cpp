@@ -7,7 +7,8 @@
 // Official repository: https://github.com/cppalliance/http_proto
 //
 
-#include <boost/http_proto/rfc/transfer_encoding_rule.hpp>
+#include "transfer_encoding_rule.hpp"
+
 #include <boost/http_proto/rfc/token_rule.hpp>
 #include <boost/http_proto/rfc/detail/rules.hpp>
 #include <boost/url/grammar/ci_string.hpp>
@@ -100,8 +101,6 @@ struct tparam_rule_t
 
 constexpr tparam_rule_t tparam_rule{};
 
-} // detail
-
 //------------------------------------------------
 
 auto
@@ -157,6 +156,8 @@ parse(
     }
     return t;
 }
+} // detail
+
 
 } // http_proto
 } // boost
