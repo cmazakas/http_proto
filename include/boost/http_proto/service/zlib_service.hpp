@@ -27,7 +27,8 @@ struct decoder_config
 
 //------------------------------------------------
 
-struct deflate_decoder_service
+struct BOOST_HTTP_PROTO_ZLIB_DECL
+    deflate_decoder_service
     : service
 {
     struct config : decoder_config
@@ -47,10 +48,14 @@ struct deflate_decoder_service
 
     virtual
     filter&
-    make_filter(detail::workspace& ws) const = 0;
-};
+    make_deflate_filter(
+        http_proto::detail::workspace& ws) const = 0;
 
-//------------------------------------------------
+    virtual
+    filter&
+    make_gzip_filter(
+        http_proto::detail::workspace& ws) const = 0;
+};
 
 } // zlib
 } // http_proto

@@ -11,6 +11,8 @@
 #define BOOST_HTTP_PROTO_SERIALIZER_HPP
 
 #include <boost/http_proto/detail/config.hpp>
+#include <boost/http_proto/context.hpp>
+#include <boost/http_proto/filter.hpp>
 #include <boost/http_proto/source.hpp>
 #include <boost/http_proto/detail/array_of_buffers.hpp>
 #include <boost/http_proto/detail/except.hpp>
@@ -71,6 +73,11 @@ public:
     BOOST_HTTP_PROTO_DECL
     explicit
     serializer(
+        std::size_t buffer_size);
+
+    BOOST_HTTP_PROTO_DECL
+    serializer(
+        context& ctx,
         std::size_t buffer_size);
 
     //--------------------------------------------
@@ -308,8 +315,9 @@ private:
 
     detail::workspace ws_;
     detail::array_of_const_buffers buf_;
+    filter* zlib_filter_ = nullptr;
     source* src_;
-
+    context* ctx_ = nullptr;
     buffers::circular_buffer tmp0_;
     buffers::circular_buffer tmp1_;
     detail::array_of_const_buffers out_;
@@ -321,6 +329,8 @@ private:
     bool is_done_;
     bool is_chunked_;
     bool is_expect_continue_;
+    bool is_compressed_ = false;
+    bool filter_done_ = false;
 };
 
 //------------------------------------------------
@@ -529,14 +539,16 @@ start(
     auto const& bs =
         ws_.emplace<ConstBufferSequence>(
             std::forward<ConstBufferSequence>(body));
+
     std::size_t n = std::distance(
         buffers::begin(bs),
         buffers::end(bs));
+
     buf_ = make_array(n);
     auto p = buf_.data();
-    for(buffers::const_buffer b :
-            buffers::range(bs))
+    for(buffers::const_buffer b : buffers::range(bs))
         *p++ = b;
+
     start_buffers(m);
 }
 
@@ -550,6 +562,9 @@ start(
     message_view_base const& m,
     Args&&... args)
 {
+    static_assert(
+        !std::is_abstract<Source>::value,
+        "The Source must be non-abstract, i.e. implements: `auto on_read(buffers::mutable_buffer b) -> http_proto::results;`");
     static_assert(
         std::is_constructible<Source, Args...>::value ||
         std::is_constructible<Source, buffered_base::allocator&, Args...>::value,
