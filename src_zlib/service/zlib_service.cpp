@@ -237,37 +237,51 @@ private:
 
 namespace {
 void* zalloc_impl(
-    void* /* opaque */,
+    void* opaque,
     unsigned items,
     unsigned size)
 {
-    try {
-        return ::operator new(items * size);
-    } catch(std::bad_alloc const&) {
+    try
+    {
+        auto n = items * size;
+        auto* ws =
+            reinterpret_cast<
+                http_proto::detail::workspace*>(opaque);
+
+        return ws->reserve_front(n);
+    }
+    catch(...)
+    {
         return Z_NULL;
     }
 }
 
-void zfree_impl(void* /* opaque */, void* addr)
+void zfree_impl(void* /* opaque */, void* /* addr */)
 {
-    ::operator delete(addr);
+    // we call ws_.clear() before the serializer is reused
+    // so all the allocations are passively freed
 }
+
 } // namespace
 
 class BOOST_HTTP_PROTO_ZLIB_DECL
-    zlib_filter final : public filter
+    deflate_filter final : public filter
 {
 private:
     z_stream stream_;
+    http_proto::detail::workspace& ws_;
 
     void init(bool use_gzip);
 
 public:
-    zlib_filter(bool use_gzip = false);
-    ~zlib_filter();
+    deflate_filter(
+        http_proto::detail::workspace& ws,
+        bool use_gzip = false);
+    ~deflate_filter();
 
-    zlib_filter(zlib_filter const&) = delete;
-    zlib_filter& operator=(zlib_filter const&) = delete;
+    deflate_filter(deflate_filter const&) = delete;
+    deflate_filter& operator=(
+        deflate_filter const&) = delete;
 
     filter::results
     on_process(
@@ -276,23 +290,26 @@ public:
         bool more) override;
 };
 
-zlib_filter::
-zlib_filter(bool use_gzip)
+deflate_filter::
+deflate_filter(
+    http_proto::detail::workspace& ws,
+    bool use_gzip)
+    : ws_(ws)
 {
     stream_.zalloc = &zalloc_impl;
     stream_.zfree = &zfree_impl;
-    stream_.opaque = nullptr;
+    stream_.opaque = &ws_;
     init(use_gzip);
 }
 
-zlib_filter::
-~zlib_filter()
+deflate_filter::
+~deflate_filter()
 {
     deflateEnd(&stream_);
 }
 
 void
-zlib_filter::
+deflate_filter::
 init(bool use_gzip)
 {
     int ret = -1;
@@ -318,7 +335,7 @@ init(bool use_gzip)
 }
 
 filter::results
-zlib_filter::
+deflate_filter::
 on_process(
     buffers::mutable_buffer out,
     buffers::const_buffer in,
@@ -430,14 +447,14 @@ private:
     make_deflate_filter(
         http_proto::detail::workspace& ws) const override
     {
-        return ws.emplace<zlib_filter>(false);
+        return ws.emplace<deflate_filter>(ws, false);
     }
 
     filter&
     make_gzip_filter(
         http_proto::detail::workspace& ws) const override
     {
-        return ws.emplace<zlib_filter>(true);
+        return ws.emplace<deflate_filter>(ws, true);
     }
 };
 

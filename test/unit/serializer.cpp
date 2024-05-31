@@ -160,7 +160,8 @@ struct serializer_test
     void
     testSyntax()
     {
-        serializer sr(1024);
+        context ctx;
+        serializer sr(ctx, 1024);
         response res;
 
         sr.start(res);
@@ -172,7 +173,7 @@ struct serializer_test
         sr.start<test_source>(res, make_const("12345"));
         sr.start_stream(res);
 
-        serializer(65536);
+        serializer(ctx, 65536);
 #ifdef BOOST_HTTP_PROTO_HAS_ZLIB
 #if 0
         serializer(65536, gzip_decoder);
@@ -193,7 +194,8 @@ struct serializer_test
             core::string_view expected)
         {
             response res(headers);
-            serializer sr;
+            context ctx;
+            serializer sr(ctx);
             sr.start(res);
             std::string s = read(sr);
             BOOST_TEST(s == expected);
@@ -231,7 +233,9 @@ struct serializer_test
     {
         response res(headers);
         std::string sb = body;
-        serializer sr;
+
+        context ctx;
+        serializer sr(ctx);
         sr.start(res,
             string_body(std::move(sb)));
         std::string s = read(sr);
@@ -248,7 +252,8 @@ struct serializer_test
         response res(headers);
         // we limit the buffer size of the serializer, requiring
         // it to make multiple calls to source::read
-        serializer sr(1024);
+        context ctx;
+        serializer sr(ctx, 1024);
         sr.start<Source>(res, std::forward<
             Source>(src));
         std::string s = read(sr);
@@ -272,7 +277,8 @@ struct serializer_test
 
         response res(headers);
 
-        serializer sr(sr_capacity);
+        context ctx;
+        serializer sr(ctx, sr_capacity);
         auto stream = sr.start_stream(res);
         BOOST_TEST_EQ(stream.size(), 0);
         BOOST_TEST_GT(stream.capacity(), 0);
@@ -587,7 +593,8 @@ struct serializer_test
     {
         // request
         {
-            serializer sr;
+            context ctx;
+            serializer sr(ctx);
             request req(
                 "GET / HTTP/1.1\r\n"
                 "Expect: 100-continue\r\n"
@@ -634,7 +641,8 @@ struct serializer_test
 
         // empty body
         {
-            serializer sr;
+            context ctx;
+            serializer sr(ctx);
             request req(
                 "GET / HTTP/1.1\r\n"
                 "Expect: 100-continue\r\n"
@@ -676,7 +684,9 @@ struct serializer_test
                 "Content-Length: 5\r\n"
                 "Expect: 100-continue\r\n"
                 "\r\n";
-            serializer sr;
+
+            context ctx;
+            serializer sr(ctx);
             response res(sv);
             sr.start<test_source>(res, "12345");
             auto s = read(sr);
@@ -706,7 +716,8 @@ struct serializer_test
 
             response res(sv);
 
-            serializer sr;
+            context ctx;
+            serializer sr(ctx);
             auto stream = sr.start_stream(res);
             auto mbs = stream.prepare();
             BOOST_TEST_GT(
@@ -752,7 +763,8 @@ struct serializer_test
                 "\r\n";
 
             response res(sv);
-            serializer sr(1024);
+            context ctx;
+            serializer sr(ctx, 1024);
 
             auto stream = sr.start_stream(res);
 

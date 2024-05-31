@@ -102,19 +102,13 @@ serializer::
 }
 
 serializer::
-serializer()
-    : serializer(65536)
-{
-}
-
-serializer::
 serializer(
     serializer&&) noexcept = default;
 
 serializer::
 serializer(
-    std::size_t buffer_size)
-    : ws_(buffer_size)
+    context& ctx)
+    : serializer(ctx, 65536)
 {
 }
 
@@ -123,7 +117,7 @@ serializer(
     context& ctx,
     std::size_t buffer_size)
     : ws_(buffer_size)
-    , ctx_(&ctx)
+    , ctx_(ctx)
 {
 }
 
@@ -131,6 +125,13 @@ void
 serializer::
 reset() noexcept
 {
+    ws_.clear();
+    more_ = false;
+    is_done_ = false;
+    is_chunked_ = false;
+    is_expect_continue_ = false;
+    is_compressed_ = false;
+    filter_done_ = false;
 }
 
 //------------------------------------------------
@@ -157,7 +158,7 @@ prepare() ->
 
     if( is_compressed_ )
     {
-        BOOST_ASSERT(zlib_filter_);
+        BOOST_ASSERT(deflate_filter_);
 
         auto& zbuf = tmp1_;
 
@@ -295,7 +296,7 @@ prepare() ->
                 break;
             }
 
-            auto results = zlib_filter_->on_process(
+            auto results = deflate_filter_->on_process(
                 out, in, more_);
 
             if( results.finished )
@@ -522,7 +523,7 @@ serializer::
 start_init(
     message_view_base const& m)
 {
-    ws_.clear();
+    reset();
 
     // VFALCO what do we do with
     // metadata error code failures?
@@ -540,21 +541,19 @@ start_init(
         is_chunked_ = te.is_chunked;
     }
 
-    if( m.metadata().transfer_encoding.compression_coding !=
-        http_proto::compression_coding::none )
+    if( m.metadata().transfer_encoding.encoding !=
+        http_proto::encoding::identity )
     {
         is_compressed_ = true;
         auto& svc =
-            ctx_->get_service<
+            ctx_.get_service<
                 zlib::deflate_decoder_service>();
 
-        BOOST_ASSERT(!zlib_filter_);
-
         auto use_gzip =
-            m.metadata().transfer_encoding.compression_coding ==
-            http_proto::compression_coding::gzip;
+            m.metadata().transfer_encoding.encoding ==
+            http_proto::encoding::gzip;
 
-        zlib_filter_ =
+        deflate_filter_ =
             use_gzip ?
             &svc.make_gzip_filter(ws_) :
             &svc.make_deflate_filter(ws_);

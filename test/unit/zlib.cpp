@@ -318,7 +318,7 @@ struct zlib_test
 
     void zlib_serializer_impl(
         fp_type fp,
-        core::string_view c,
+        core::string_view const c,
         std::string const& body,
         bool chunked_encoding)
     {
@@ -326,93 +326,99 @@ struct zlib_test
         zlib::deflate_decoder_service::config cfg;
         cfg.install(ctx);
 
-        span<char const> body_view = body;
-        std::string header;
+        serializer sr(ctx, cfg.size_hint() + (2 * 1024));
+
+        // prove we can reuse the serializer successfully
+        for( int i = 0; i < 2; ++i )
         {
-            header += "HTTP/1.1 200 OK\r\n";
-            if( c == "deflate" )
-                header += "Transfer-Encoding: deflate\r\n";
+            sr.reset();
 
-            if( c == "gzip" )
-                header += "Transfer-Encoding: gzip\r\n";
+            response res;
+            res.set("Transfer-Encoding", c);
+            res.set_chunked(chunked_encoding);
 
-            if( chunked_encoding )
-                header += "Transfer-Encoding: chunked\r\n";
+            std::string header;
+            {
+                header += "HTTP/1.1 200 OK\r\n";
+                if( c == "deflate" )
+                    header += "Transfer-Encoding: deflate\r\n";
 
-            header += "\r\n";
+                if( c == "gzip" )
+                    header += "Transfer-Encoding: gzip\r\n";
+
+                if( chunked_encoding )
+                    header += "Transfer-Encoding: chunked\r\n";
+
+                header += "\r\n";
+            }
+
+            core::string_view str = header;
+            std::vector<unsigned char> output(
+                str.size() + 3 * body.size(), 0x00);
+
+            span<char const> body_view = body;
+            auto output_buf =
+                fp(res, sr, body_view, output);
+
+            auto m = output.size() - output_buf.size();
+            auto sv =
+                core::string_view(
+                        reinterpret_cast<char const*>(
+                            output.data()),
+                        m);
+
+            BOOST_TEST(sv.starts_with(str));
+
+            sv = sv.substr(str.size());
+
+            std::vector<unsigned char> compressed;
+            compressed.reserve(body_view.size());
+
+            while(! sv.empty() )
+            {
+                if(! res.chunked() )
+                {
+                    compressed.insert(
+                        compressed.end(), sv.begin(), sv.end());
+                    break;
+                }
+
+                core::string_view& chunk = sv;
+
+                auto pos = chunk.find_first_of("\r\n");
+                BOOST_TEST_NE(pos, core::string_view::npos);
+
+                std::string chunk_header = chunk.substr(0, pos);
+                chunk.remove_prefix(pos + 2);
+
+                auto chunk_size = std::stoul(
+                    chunk_header, nullptr, 16);
+
+                if( chunk_size == 0 )
+                {
+                    BOOST_TEST_EQ(chunk, "\r\n");
+                }
+                else
+                {
+                    BOOST_TEST_LT(
+                        chunk.begin() + chunk_size,
+                        chunk.end());
+
+                    compressed.insert(
+                        compressed.end(),
+                        chunk.data(),
+                        chunk.data() + chunk_size);
+
+                    chunk.remove_prefix(chunk_size);
+                    BOOST_TEST(chunk.starts_with("\r\n"));
+                }
+                chunk.remove_prefix(2);
+            }
+
+            // BOOST_TEST_LT(compressed.size(), body.size());
+
+            verify_compressed(compressed, body);
         }
-
-        core::string_view str = header;
-        response res;
-        res.set("Transfer-Encoding", c);
-        res.set_chunked(chunked_encoding);
-
-        serializer sr(ctx, 2048);
-
-        std::vector<unsigned char> output(
-            str.size() + 3 * body.size(), 0x00);
-
-        auto output_buf =
-            fp(res, sr, body_view, output);
-
-        auto m = output.size() - output_buf.size();
-        auto sv =
-            core::string_view(
-                    reinterpret_cast<char const*>(
-                        output.data()),
-                    m);
-
-        BOOST_TEST(sv.starts_with(str));
-
-        sv = sv.substr(str.size());
-
-        std::vector<unsigned char> compressed;
-        compressed.reserve(body_view.size());
-
-        while(! sv.empty() )
-        {
-            if(! res.chunked() )
-            {
-                compressed.insert(
-                    compressed.end(), sv.begin(), sv.end());
-                break;
-            }
-
-            core::string_view& chunk = sv;
-
-            auto pos = chunk.find_first_of("\r\n");
-            BOOST_TEST_NE(pos, core::string_view::npos);
-
-            std::string chunk_header = chunk.substr(0, pos);
-            chunk.remove_prefix(pos + 2);
-
-            auto chunk_size = std::stoul(
-                chunk_header, nullptr, 16);
-
-            if( chunk_size == 0 )
-            {
-                BOOST_TEST_EQ(chunk, "\r\n");
-            }
-            else
-            {
-                BOOST_TEST_LT(
-                    chunk.begin() + chunk_size,
-                    chunk.end());
-
-                compressed.insert(
-                    compressed.end(),
-                    chunk.data(),
-                    chunk.data() + chunk_size);
-
-                chunk.remove_prefix(chunk_size);
-                BOOST_TEST(chunk.starts_with("\r\n"));
-            }
-            chunk.remove_prefix(2);
-        }
-
-        // BOOST_TEST_LT(compressed.size(), body.size());
-
-        verify_compressed(compressed, body);
     }
 
     void

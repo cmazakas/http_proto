@@ -60,21 +60,17 @@ public:
     /** Constructor
     */
     BOOST_HTTP_PROTO_DECL
-    serializer();
-
-    /** Constructor
-    */
-    BOOST_HTTP_PROTO_DECL
     serializer(
         serializer&&) noexcept;
 
     /** Constructor
     */
     BOOST_HTTP_PROTO_DECL
-    explicit
     serializer(
-        std::size_t buffer_size);
+        context& ctx);
 
+    /** Constructor
+    */
     BOOST_HTTP_PROTO_DECL
     serializer(
         context& ctx,
@@ -315,9 +311,9 @@ private:
 
     detail::workspace ws_;
     detail::array_of_const_buffers buf_;
-    filter* zlib_filter_ = nullptr;
+    filter* deflate_filter_ = nullptr;
     source* src_;
-    context* ctx_ = nullptr;
+    context& ctx_;
     buffers::circular_buffer tmp0_;
     buffers::circular_buffer tmp1_;
     detail::array_of_const_buffers out_;
@@ -563,8 +559,7 @@ start(
     Args&&... args)
 {
     static_assert(
-        !std::is_abstract<Source>::value,
-        "The Source must be non-abstract, i.e. implements: `auto on_read(buffers::mutable_buffer b) -> http_proto::results;`");
+        !std::is_abstract<Source>::value, "");
     static_assert(
         std::is_constructible<Source, Args...>::value ||
         std::is_constructible<Source, buffered_base::allocator&, Args...>::value,

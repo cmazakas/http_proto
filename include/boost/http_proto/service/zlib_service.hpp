@@ -23,6 +23,7 @@ namespace zlib {
 struct decoder_config
 {
     unsigned max_window_bits = 15;
+    unsigned mem_level = 8;
 };
 
 //------------------------------------------------
@@ -36,6 +37,15 @@ struct BOOST_HTTP_PROTO_ZLIB_DECL
         BOOST_HTTP_PROTO_ZLIB_DECL
         void
         install(context& ctx);
+
+        std::size_t
+        size_hint() const noexcept
+        {
+            return
+                (1 << (max_window_bits + 2)) +
+                (1 << (mem_level + 9)) +
+                (6 * 1024);
+        }
     };
 
     virtual
