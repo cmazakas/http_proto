@@ -152,15 +152,15 @@ public:
 
     //--------------------------------------------
 
-    /** Create a new stream object associated with the
-        serializer.
+    /** Return a new stream for this serializer.
 
-        The returned stream must not outlive its backing
-        serializer object.
+        After the serializer is destroyed, `reset` is called,
+        or `is_done` returns true, the only valid operation
+        on the stream is destruction.
 
-        Streams permit a user to supply input data to
-        the serializer using a bounded sequence of mutable
-        buffers.
+        A stream may be used to invert the flow of control
+        when the caller is supplying body data as a series
+        of buffers.
 
         @code{.cpp}
         std::string msg = "Hello, world!";
@@ -336,8 +336,8 @@ private:
 //------------------------------------------------
 
 /**
-    A proxy type used to pass bounded input to the
-    associated serializer.
+    The type used for caller-provided body data during
+    serialization.
 */
 struct serializer::stream
 {
