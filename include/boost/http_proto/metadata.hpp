@@ -54,7 +54,26 @@ enum class payload
     ,to_eof
 };
 
-enum class compression_coding { none, deflate, gzip };
+/** The effective encoding of the body octets.
+*/
+enum class
+encoding
+{
+    /**
+      * Indicates the body is not encoded.
+    */
+    identity,
+
+    /**
+      * Indicates the body has deflate applied.
+    */
+    deflate,
+
+    /**
+      * Indicates the body has gzip applied.
+    */
+    gzip
+};
 
 //------------------------------------------------
 
@@ -203,8 +222,17 @@ struct metadata
         */
         bool is_chunked = false;
 
-        http_proto::compression_coding compression_coding =
-            http_proto::compression_coding::none;
+        /** The effective body encoding.
+
+            This indicates the type of encoding detected on the body,
+            if the fields contain a valid encoding. Otherwise it will have
+            @ref encoding::identity if the header is invalid.
+
+            Whether or not the message entity is also chunked is set
+            in @ref metadata::is_chunked and not here.
+        */
+        http_proto::encoding encoding =
+            http_proto::encoding::identity;
 
     #ifdef BOOST_HTTP_PROTO_AGGREGATE_WORKAROUND
         constexpr
@@ -220,8 +248,8 @@ struct metadata
             , count(count_)
             , codings(codings_)
             , is_chunked(is_chunked_)
-            , compression_coding(
-                http_proto::compression_coding::none)
+            , encoding(
+                http_proto::encoding::identity)
         {
         }
     #endif
