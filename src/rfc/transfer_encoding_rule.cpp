@@ -29,7 +29,7 @@ namespace detail {
 struct tparam_rule_t
 {
     using value_type =
-        transfer_coding::param;
+        transfer_encoding::param;
 
     auto
     parse(
@@ -104,7 +104,7 @@ constexpr tparam_rule_t tparam_rule{};
 //------------------------------------------------
 
 auto
-transfer_coding_rule_t::
+transfer_encoding_rule_t::
 parse(
     char const*& it,
     char const* end) const noexcept ->
@@ -123,25 +123,25 @@ parse(
         if(grammar::ci_is_equal(
             t.str, "chunked"))
         {
-            t.id = transfer_coding::chunked;
+            t.id = transfer_encoding::chunked;
             return t;
         }
         if(grammar::ci_is_equal(
             t.str, "compress"))
         {
-            t.id = transfer_coding::compress;
+            t.id = transfer_encoding::compress;
             return t;
         }
         if(grammar::ci_is_equal(
             t.str, "deflate"))
         {
-            t.id = transfer_coding::deflate;
+            t.id = transfer_encoding::deflate;
             return t;
         }
         if(grammar::ci_is_equal(
             t.str, "gzip"))
         {
-            t.id = transfer_coding::gzip;
+            t.id = transfer_encoding::gzip;
             return t;
         }
     }

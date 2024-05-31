@@ -20,15 +20,15 @@ namespace http_proto {
 
 BOOST_STATIC_ASSERT(
     std::is_nothrow_copy_assignable<
-        system::result<detail::transfer_coding>>::value);
+        system::result<detail::transfer_encoding>>::value);
 
 BOOST_STATIC_ASSERT(
     std::is_nothrow_copy_assignable<
-        grammar::range<detail::transfer_coding::param>>::value);
+        grammar::range<detail::transfer_encoding::param>>::value);
 
 BOOST_STATIC_ASSERT(
     std::is_nothrow_copy_assignable<
-        detail::transfer_coding::param>::value);
+        detail::transfer_encoding::param>::value);
 
 BOOST_STATIC_ASSERT(
     std::is_nothrow_copy_assignable<
@@ -36,15 +36,15 @@ BOOST_STATIC_ASSERT(
 
 BOOST_STATIC_ASSERT(
     std::is_nothrow_copy_constructible<
-        system::result<detail::transfer_coding>>::value);
+        system::result<detail::transfer_encoding>>::value);
 
 BOOST_STATIC_ASSERT(
     std::is_nothrow_copy_constructible<
-        grammar::range<detail::transfer_coding::param>>::value);
+        grammar::range<detail::transfer_encoding::param>>::value);
 
 BOOST_STATIC_ASSERT(
     std::is_nothrow_copy_constructible<
-        detail::transfer_coding::param>::value);
+        detail::transfer_encoding::param>::value);
 
 BOOST_STATIC_ASSERT(
     std::is_nothrow_copy_constructible<
