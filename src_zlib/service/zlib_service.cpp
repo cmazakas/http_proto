@@ -15,8 +15,11 @@
 #include <boost/http_proto/metadata.hpp>
 #include <boost/http_proto/detail/workspace.hpp>
 
+#include <boost/assert/source_location.hpp>
 #include <boost/buffers/circular_buffer.hpp>
+#include <boost/config.hpp>
 #include <boost/system/result.hpp>
+#include <boost/throw_exception.hpp>
 
 #include <zlib.h>
 
@@ -130,6 +133,16 @@ make_error_code(
     return system::error_code{static_cast<
         std::underlying_type<
             error>::type>(ev), cat};
+}
+
+BOOST_NOINLINE BOOST_NORETURN
+void
+throw_zlib_error(
+    int e,
+    source_location const& loc = BOOST_CURRENT_LOCATION)
+{
+    throw_exception(
+        system::system_error(static_cast<error>(e)), loc);
 }
 
 //------------------------------------------------
@@ -250,7 +263,7 @@ void* zalloc_impl(
 
         return ws->reserve_front(n);
     }
-    catch(...)
+    catch(std::length_error const&) // represents OOM
     {
         return Z_NULL;
     }
@@ -325,7 +338,7 @@ init(bool use_gzip)
         window_bits, mem_level, Z_DEFAULT_STRATEGY);
 
     if( ret != Z_OK )
-        throw ret;
+        throw_zlib_error(ret);
 
     stream_.next_out = nullptr;
     stream_.avail_out = 0;
@@ -343,13 +356,11 @@ on_process(
 {
     auto& zstream = stream_;
 
-    BOOST_ASSERT(out.size() > 6);
-
     auto flush = more ? Z_NO_FLUSH : Z_FINISH;
     int ret = -1;
     filter::results results;
 
-    while( true )
+    for(;;)
     {
         zstream.next_in =
             reinterpret_cast<unsigned char*>(
@@ -378,7 +389,7 @@ on_process(
         if( ret != Z_OK &&
             ret != Z_BUF_ERROR &&
             ret != Z_STREAM_END )
-            throw ret;
+            throw_zlib_error(ret);
 
         if( is_empty &&
             n2 == zstream.avail_out &&

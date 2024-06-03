@@ -232,8 +232,6 @@ prepare() ->
 
                 buf = { buf.data(), n };
             }
-
-            // BOOST_ASSERT(buf.size() > 0);
             return buf;
         };
 
@@ -248,6 +246,17 @@ prepare() ->
             else
                 zbuf.consume(n);
         };
+
+        // callers must consume() everything before invoking
+        // prepare() again
+        if( tmp0_.size() > 0 )
+            detail::throw_logic_error();
+
+        // minimum output buffer size has to accommodate
+        // chunked overhead, zlib flush marker overhead and
+        // must have space for at least one output byte
+        if( tmp0_.capacity() < chunked_overhead_ + 6 + 1 )
+            detail::throw_length_error();
 
         if( st_ == style::source )
         {
@@ -284,15 +293,14 @@ prepare() ->
         }
 
         std::size_t num_written = 0;
-        while( true )
+        for(;;)
         {
             auto in = get_input();
             auto out = get_output();
-            if( out.size() <
-                6 + // minimum required by zlib
-                1 )
+            if( out.size() == 0 )
             {
-                BOOST_ASSERT(tmp0_.size() > 0);
+                if( tmp0_.size() == 0 )
+                    detail::throw_logic_error();
                 break;
             }
 
