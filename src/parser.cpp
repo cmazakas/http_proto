@@ -315,11 +315,11 @@ parse_last_chunk(
     input.consume(len + close_len);
 };
 
-template <class ElasticBuffer>
+template <class DynamicBuffer>
 bool
 parse_chunked(
     buffers::circular_buffer& input,
-    ElasticBuffer& output,
+    DynamicBuffer& output,
     system::error_code& ec,
     std::size_t& chunk_remain_,
     std::uint64_t& body_avail_,
@@ -696,28 +696,29 @@ prepare() ->
             return mutable_buffers_type{};
 
     do_body:
-        if(! is_plain())
-        {
-            // buffered payload
-            auto n = cb0_.capacity() -
-                cb0_.size();
-            if( n > svc_.cfg.max_prepare)
-                n = svc_.cfg.max_prepare;
-            mbp_ = cb0_.prepare(n);
-            nprepare_ = n;
-            return mutable_buffers_type(mbp_);
-        }
+        // if(! is_plain())
+        // {
+        //     // buffered payload
+        //     auto n = cb0_.capacity() -
+        //         cb0_.size();
+        //     if( n > svc_.cfg.max_prepare)
+        //         n = svc_.cfg.max_prepare;
+        //     mbp_ = cb0_.prepare(n);
+        //     nprepare_ = n;
+        //     return mutable_buffers_type(mbp_);
+        // }
 
         // plain payload
 
         if(how_ == how::in_place)
         {
+            auto& input = cb0_;
             auto n =
-                body_buf_->capacity() -
-                body_buf_->size();
+                input.capacity() -
+                input.size();
             if( n > svc_.cfg.max_prepare)
                 n = svc_.cfg.max_prepare;
-            mbp_ = body_buf_->prepare(n);
+            mbp_ = input.prepare(n);
             nprepare_ = n;
             return mutable_buffers_type(mbp_);
         }
@@ -740,15 +741,17 @@ prepare() ->
                 return eb_->prepare(n);
             }
 
-            BOOST_ASSERT(
-                h_.md.payload == payload::to_eof);
+            // BOOST_ASSERT(
+            //     h_.md.payload == payload::to_eof);
             std::size_t n = 0;
             if(! got_eof_)
             {
                 // calculate n heuristically
                 n = svc_.cfg.min_buffer;
+
                 if( n > svc_.cfg.max_prepare)
                     n = svc_.cfg.max_prepare;
+
                 {
                     // apply max_size()
                     auto avail =
@@ -757,9 +760,10 @@ prepare() ->
                     if( n > avail)
                         n = avail;
                 }
-                // fill capacity() first,
-                // to avoid an allocation
+
                 {
+                    // fill capacity() first,
+                    // to avoid an allocation
                     auto avail =
                         eb_->capacity() -
                             eb_->size();
@@ -767,6 +771,7 @@ prepare() ->
                             avail != 0)
                         n = avail;
                 }
+
                 if(n == 0)
                 {
                     // dynamic buffer is full
@@ -784,6 +789,13 @@ prepare() ->
                 }
             }
             nprepare_ = n;
+
+            if( h_.md.payload == payload::chunked )
+            {
+                auto& input = cb0_;
+                mbp_ = input.prepare(n);
+                return mutable_buffers_type(mbp_);
+            }
             return eb_->prepare(n);
         }
 
@@ -1130,10 +1142,33 @@ parse(
             if( how_ == how::in_place )
             {
                 auto& output = cb1_;
+                auto old = body_avail_;
                 completed =
                     parse_chunked(
                         input, output, ec, chunk_remain_,
                         body_avail_, needs_chunk_close_);
+                body_total_ += (body_avail_ - old);
+            }
+            else if( how_ == how::elastic )
+            {
+                auto& input = cb0_;
+                auto& output = *eb_;
+
+                completed = parse_chunked(
+                    input, output, ec,
+                    chunk_remain_,
+                    body_avail_,
+                    needs_chunk_close_);
+
+                auto cbs = eb_->data();
+                auto size = buffers::buffer_size(cbs);
+
+                std::string s(size, '\0');
+                buffers::buffer_copy(
+                    buffers::mutable_buffer(
+                        s.data(),
+                        s.size()),
+                    cbs);
             }
             else
                 detail::throw_logic_error();
@@ -1582,9 +1617,15 @@ on_headers(
         auto const n0 =
             fb_.capacity() - fb_.size();
 
-        cb0_ = { ws_.data(), n0 / 2, overread };
-        cb1_ = { ws_.data() + n0 / 2, n0 - (n0 / 2), 0 };
-        body_buf_ = &cb1_;
+        if( how_ == how::in_place )
+        {
+            cb0_ = { ws_.data(), n0 / 2, overread };
+            cb1_ = { ws_.data() + n0 / 2, n0 - (n0 / 2), 0 };
+            body_buf_ = &cb1_;
+        }
+        else
+            detail::throw_logic_error();
+
         st_ = state::body;
         return;
     }
@@ -1624,6 +1665,7 @@ on_set_body()
             BOOST_ASSERT(st_ == state::complete);
             return;
         }
+
 
         st_ = state::set_body;
         return;
@@ -1698,22 +1740,41 @@ init_dynamic(
         return;
     }
 
-    BOOST_ASSERT(h_.md.payload ==
-        payload::to_eof);
+    // BOOST_ASSERT(h_.md.payload ==
+    //     payload::to_eof);
     if(space_left < body_avail_)
     {
         ec = BOOST_HTTP_PROTO_ERR(
             error::buffer_overflow);
         return;
     }
-    eb_->commit(
-        buffers::buffer_copy(
-            eb_->prepare(static_cast<std::size_t>(body_avail_)),
-            body_buf_->data()));
-    body_buf_->consume(static_cast<std::size_t>(body_avail_));
+
+    if( h_.md.payload == payload::chunked )
+    {
+        auto& output = cb1_;
+        auto body_avail =
+            static_cast<std::size_t>(body_avail_);
+
+        eb_->commit(
+            buffers::buffer_copy(
+                eb_->prepare(
+                    body_avail),
+                output.data()));
+
+        output.consume(body_avail);
+    }
+    else
+    {
+        eb_->commit(
+            buffers::buffer_copy(
+                eb_->prepare(static_cast<std::size_t>(body_avail_)),
+                body_buf_->data()));
+        body_buf_->consume(static_cast<std::size_t>(body_avail_));
+        BOOST_ASSERT(
+            body_buf_->size() == 0);
+    }
+
     body_avail_ = 0;
-    BOOST_ASSERT(
-        body_buf_->size() == 0);
     st_ = state::body;
 }
 

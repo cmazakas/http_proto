@@ -20,6 +20,7 @@
 #include <boost/buffers/make_buffer.hpp>
 #include <boost/buffers/string_buffer.hpp>
 #include <boost/core/ignore_unused.hpp>
+#include <iostream>
 #include <vector>
 
 #include "test_helpers.hpp"
@@ -1904,29 +1905,112 @@ struct parser_test
         }
     }
 
+    void
+    testChunkedElasticBuffer()
+    {
+        context ctx;
+        response_parser::config cfg;
+        install_parser_service(ctx, cfg);
+
+        response_parser pr(ctx);
+
+        {
+            // valid chunk, but split up oddly
+
+            pr.reset();
+            pr.start();
+            std::vector<core::string_view> pieces = {
+                "HTTP/1.1 200 OK\r\ntransfer-encoding: chunked\r\n\r\n",
+                "d\r\nhello, ",
+                "world!",
+                "\r\n",
+                "29\r\n",
+                " and this is a much longer ",
+                "string of text",
+                "\r\n",
+                "0\r\n\r\n"
+            };
+
+            system::error_code ec;
+
+            std::cout << "starting parsing routines..." << std::endl;
+            std::size_t i = 0;
+            for( ; i < 2; ++i )
+            {
+                pr.commit(
+                    buffers::buffer_copy(
+                        pr.prepare(),
+                        buffers::const_buffer(
+                            pieces[i].data(),
+                            pieces[i].size())));
+
+
+                pr.parse(ec);
+                if( ec)
+                    BOOST_TEST_EQ(
+                        ec, condition::need_more_input);
+            }
+
+            BOOST_TEST(!pr.is_complete());
+
+            std::size_t const buf_len = 4096;
+            unsigned char buf[buf_len] = {};
+
+            // TODO: we need a test for an empty flat buffer
+            // need to switch this back to flat_buffer once
+            // we fix a bug in Buffers with regards to capacity()
+            boost::buffers::circular_buffer flat_buf(
+                buf, buf_len);
+
+            pr.set_body(std::ref(flat_buf));
+
+            for( ; i < pieces.size(); ++i )
+            {
+                pr.commit(
+                    buffers::buffer_copy(
+                        pr.prepare(),
+                        buffers::const_buffer(
+                            pieces[i].data(),
+                            pieces[i].size())));
+
+
+                pr.parse(ec);
+                if( ec)
+                {
+                    BOOST_TEST_EQ(
+                        ec, condition::need_more_input);
+                }
+            }
+
+            BOOST_TEST(pr.is_complete());
+            BOOST_TEST_EQ(pr.body(), "");
+        }
+    }
+
     //-------------------------------------------
 
     void
     run()
     {
 #if 1
-        testSpecial();
-        testConfig();
-        testReset();
-        testStart();
-        testPrepare();
-        testCommit();
-        testCommitEof();
-        testParse();
-        testChunkedInPlace();
+        // testSpecial();
+        // testConfig();
+        // testReset();
+        // testStart();
+        // testPrepare();
+        // testCommit();
+        // testCommitEof();
+        // testParse();
+        // testChunkedInPlace();
+        testChunkedElasticBuffer();
 #else
         // For profiling
         for(int i = 0; i < 10000; ++i )
 #endif
         {
-            testParseHeader();
-            testParseRequest();
-            testParseResponse();
+            // testParseHeader();
+            // testParseRequest();
+            // testParseResponse();
         }
     }
 };

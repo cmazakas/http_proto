@@ -80,6 +80,18 @@ set_body(
     if(! got_header())
         detail::throw_logic_error();
 
+    // TODO: there's a problem here if the size of the
+    // buffers aren't empty and they potentially overflow
+    // what we'd be using to emplace the buffer sequence
+    // we need a test for this first
+    // during chunked parsing, cb0_ should be empty but
+    // cb1_ can be pulverized
+    // for non-chunked, non-filtered, cb0_ can be pulverized
+
+    if( h_.md.payload == payload::chunked &&
+        cb0_.size() != 0 )
+        detail::throw_logic_error();
+
     auto& dyn = ws_.emplace<
         buffers::any_dynamic_buffer_impl<typename
             std::decay<ElasticBuffer>::type&,
