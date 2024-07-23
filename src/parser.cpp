@@ -1159,16 +1159,6 @@ parse(
                     chunk_remain_,
                     body_avail_,
                     needs_chunk_close_);
-
-                auto cbs = eb_->data();
-                auto size = buffers::buffer_size(cbs);
-
-                std::string s(size, '\0');
-                buffers::buffer_copy(
-                    buffers::mutable_buffer(
-                        s.data(),
-                        s.size()),
-                    cbs);
             }
             else
                 detail::throw_logic_error();

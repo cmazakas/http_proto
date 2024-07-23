@@ -1993,24 +1993,24 @@ struct parser_test
     run()
     {
 #if 1
-        // testSpecial();
-        // testConfig();
-        // testReset();
-        // testStart();
-        // testPrepare();
-        // testCommit();
-        // testCommitEof();
-        // testParse();
-        // testChunkedInPlace();
+        testSpecial();
+        testConfig();
+        testReset();
+        testStart();
+        testPrepare();
+        testCommit();
+        testCommitEof();
+        testParse();
+        testChunkedInPlace();
         testChunkedElasticBuffer();
 #else
         // For profiling
         for(int i = 0; i < 10000; ++i )
 #endif
         {
-            // testParseHeader();
-            // testParseRequest();
-            // testParseResponse();
+            testParseHeader();
+            testParseRequest();
+            testParseResponse();
         }
     }
 };
