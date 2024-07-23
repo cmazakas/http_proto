@@ -1933,7 +1933,6 @@ struct parser_test
 
             system::error_code ec;
 
-            std::cout << "starting parsing routines..." << std::endl;
             std::size_t i = 0;
             for( ; i < 2; ++i )
             {
@@ -1984,6 +1983,19 @@ struct parser_test
 
             BOOST_TEST(pr.is_complete());
             BOOST_TEST_EQ(pr.body(), "");
+
+            BOOST_TEST_EQ(flat_buf.size(), 0x0d + 0x29);
+
+            std::vector<char> out(flat_buf.size(), '\0');
+            buffers::buffer_copy(
+                buffers::mutable_buffer(
+                    out.data(),
+                    out.size()),
+                flat_buf.data());
+
+            BOOST_TEST_EQ(
+                core::string_view(out.data(), out.size()),
+                "hello, world! and this is a much longer string of text");
         }
     }
 
