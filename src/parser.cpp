@@ -656,6 +656,7 @@ start_impl(
     chunk_remain_ = 0;
     needs_chunk_close_ = false;
     body_avail_ = 0;
+    body_total_ = 0;
 }
 
 auto
@@ -950,11 +951,11 @@ commit(
                 body_buf_->commit(n);
                 body_avail_ += n;
             }
-            body_total_ += n;
             if(h_.md.payload == payload::size)
             {
                 BOOST_ASSERT(
                     n <= payload_remain_);
+                body_total_ += n;
                 payload_remain_ -= n;
                 if(payload_remain_ == 0)
                     st_ = state::complete;
@@ -1151,7 +1152,6 @@ parse(
             }
             else if( how_ == how::elastic )
             {
-                auto& input = cb0_;
                 auto& output = *eb_;
 
                 completed = parse_chunked(

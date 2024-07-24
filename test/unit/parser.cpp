@@ -1989,13 +1989,107 @@ struct parser_test
             std::vector<char> out(flat_buf.size(), '\0');
             buffers::buffer_copy(
                 buffers::mutable_buffer(
-                    out.data(),
-                    out.size()),
+                    out.data(), out.size()),
                 flat_buf.data());
 
             BOOST_TEST_EQ(
                 core::string_view(out.data(), out.size()),
                 "hello, world! and this is a much longer string of text");
+        }
+
+        {
+            // grind it out, emulate light fuzzing
+
+            core::string_view headers =
+                "HTTP/1.1 200 OK\r\n"
+                "transfer-encoding: chunked\r\n"
+                "\r\n";
+
+            core::string_view body =
+                "d\r\nhello, world!\r\n"
+                "29\r\n and this is a much longer string of text\r\n"
+                "0\r\n\r\n";
+
+
+            std::size_t i = 0;
+            for( ; i < body.size(); ++i )
+            {
+                auto s1 = body.substr(0, i);
+                auto s2 = body.substr(i);
+
+                pr.reset();
+                pr.start();
+
+                pr.commit(
+                    buffers::buffer_copy(
+                        pr.prepare(),
+                        buffers::const_buffer(
+                            headers.data(),
+                            headers.size())));
+
+                system::error_code ec;
+                pr.parse(ec);
+                BOOST_TEST_EQ(
+                    ec, condition::need_more_input);
+                BOOST_TEST(pr.got_header());
+
+                std::size_t const buf_len = 4096;
+                unsigned char buf[buf_len] = {};
+
+                boost::buffers::circular_buffer user_buf(
+                    buf, buf_len);
+
+                pr.set_body(std::ref(user_buf));
+
+                pr.commit(
+                    buffers::buffer_copy(
+                        pr.prepare(),
+                        buffers::const_buffer(
+                            s1.data(),
+                            s1.size())));
+
+                pr.parse(ec);
+                if( ec &&
+                    !BOOST_TEST_EQ(
+                        ec, condition::need_more_input) )
+                {
+                    break;
+                }
+
+                pr.commit(
+                    buffers::buffer_copy(
+                        pr.prepare(),
+                        buffers::const_buffer(
+                            s2.data(),
+                            s2.size())));
+
+                pr.parse(ec);
+                if( ec &&
+                    !BOOST_TEST_EQ(
+                        ec, condition::need_more_input) )
+                {
+                    break;
+                }
+
+                BOOST_TEST(pr.is_complete());
+                BOOST_TEST_EQ(pr.body(), "");
+
+                BOOST_TEST_EQ(user_buf.size(), 0x0d + 0x29);
+
+                std::vector<char> out(
+                    user_buf.size(), '\0');
+
+                buffers::buffer_copy(
+                    buffers::mutable_buffer(
+                        out.data(), out.size()),
+                    user_buf.data());
+
+                BOOST_TEST_EQ(
+                    core::string_view(
+                        out.data(), out.size()),
+                    "hello, world! and this is a much longer string of text");
+            }
+            BOOST_TEST_EQ(i, body.size());
         }
     }
 
