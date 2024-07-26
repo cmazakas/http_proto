@@ -20,7 +20,6 @@
 #include <boost/buffers/make_buffer.hpp>
 #include <boost/buffers/string_buffer.hpp>
 #include <boost/core/ignore_unused.hpp>
-#include <iostream>
 #include <vector>
 
 #include "test_helpers.hpp"

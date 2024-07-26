@@ -697,17 +697,6 @@ prepare() ->
             return mutable_buffers_type{};
 
     do_body:
-        // if(! is_plain())
-        // {
-        //     // buffered payload
-        //     auto n = cb0_.capacity() -
-        //         cb0_.size();
-        //     if( n > svc_.cfg.max_prepare)
-        //         n = svc_.cfg.max_prepare;
-        //     mbp_ = cb0_.prepare(n);
-        //     nprepare_ = n;
-        //     return mutable_buffers_type(mbp_);
-        // }
 
         // plain payload
 
@@ -742,8 +731,6 @@ prepare() ->
                 return eb_->prepare(n);
             }
 
-            // BOOST_ASSERT(
-            //     h_.md.payload == payload::to_eof);
             std::size_t n = 0;
             if(! got_eof_)
             {
@@ -1730,8 +1717,6 @@ init_dynamic(
         return;
     }
 
-    // BOOST_ASSERT(h_.md.payload ==
-    //     payload::to_eof);
     if(space_left < body_avail_)
     {
         ec = BOOST_HTTP_PROTO_ERR(
